@@ -1,0 +1,77 @@
+import java_cup.runtime.*;
+
+parser code {:
+    import interfaz.AnalizadorVentana;
+
+    public static void main(String[] args) throws Exception {
+        new AnalizadorVentana().setVisible(true);
+    }
+
+    @Override
+    public void report_error(String message, Object info) {
+        Symbol sym = (Symbol) info;
+        System.err.println("Error de sintaxis en línea " + (sym.left + 1) + ": " + message);
+    }
+
+    @Override
+    public void report_fatal_error(String message, Object info) {
+        report_error(message, info);
+        System.exit(1);
+    }
+:};
+
+terminal IDENTIFICADOR, NUMERO;
+terminal ROBOT, INICIAR, DETENER, CERRAR_GARRA, ABRIR_GARRA, REPETIR;
+terminal BASE, CUERPO, GARRA, VELOCIDAD;
+terminal IGUAL, PUNTO, PARENTESIS_ABRE, PARENTESIS_CIERRA, PUNTO_COMA;
+
+// No terminales
+non terminal program;
+non terminal statement;
+non terminal expression;
+non terminal iniciar_opt;
+non terminal componentes;
+non terminal accion;
+non terminal error_stmt;
+// Reglas gramaticales
+start with program;
+
+program ::= statement
+          | program statement;
+
+statement ::= 
+      ROBOT IDENTIFICADOR PUNTO_COMA
+    | IDENTIFICADOR PUNTO accion
+    | IDENTIFICADOR PUNTO componentes
+    | error PUNTO_COMA {: System.err.println("Error de sintaxis en la sentencia."); :}
+    ;
+
+componentes ::= 
+      BASE expression PUNTO_COMA
+    | BASE PARENTESIS_ABRE NUMERO PARENTESIS_CIERRA PUNTO_COMA
+    | CUERPO expression PUNTO_COMA
+    | CUERPO PARENTESIS_ABRE NUMERO PARENTESIS_CIERRA PUNTO_COMA
+    | GARRA expression PUNTO_COMA
+    | GARRA PARENTESIS_ABRE NUMERO PARENTESIS_CIERRA PUNTO_COMA
+    | VELOCIDAD PARENTESIS_ABRE NUMERO PARENTESIS_CIERRA PUNTO_COMA
+   
+    ;
+
+accion ::= 
+      INICIAR iniciar_opt PUNTO_COMA
+    | DETENER iniciar_opt PUNTO_COMA
+    | CERRAR_GARRA iniciar_opt PUNTO_COMA
+    | ABRIR_GARRA iniciar_opt PUNTO_COMA
+    | REPETIR PARENTESIS_ABRE NUMERO PARENTESIS_CIERRA PUNTO_COMA
+       ;
+
+iniciar_opt ::= 
+      PARENTESIS_ABRE PARENTESIS_CIERRA
+    | 
+    ;
+
+expression ::= 
+      IGUAL NUMERO;
+
+
+error_stmt ::= error PUNTO_COMA;
